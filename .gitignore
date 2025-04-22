@@ -1,0 +1,7 @@
+.venv
+.env
+__pycache__
+cot_tools.py
+sim_main.py
+
+
