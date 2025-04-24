@@ -16,7 +16,7 @@ genai.configure(api_key=api_key)
 # instantiate exactly one model
 model = genai.GenerativeModel("gemini-2.0-flash")
 
-max_iterations = 5
+max_iterations = 7
 last_response = None
 iteration = 0
 iteration_response = []
@@ -117,32 +117,52 @@ async def main():
                 
                 print("Created system prompt...")
                 
-                system_prompt = f"""You are a versatile agent doing tasks in iterations. You can solve math problems, and you can work in MS Paint. You have access to various mathematical tools, and access to basic MS Paint tools.
+                system_prompt = f"""You are a versatile agent that works step by step to solve problems using tools. You can reason about tasks, solve math problems, or work in MS Paint using basic tools.
 
-Available tools:
-{tools_description}
+You have access to these tools:{tools_description}
 
-You must respond with EXACTLY ONE line in one of these formats (no additional text):
-1. For function calls:
-   FUNCTION_CALL: function_name|param1|param2|...
-   
-2. For final answers:
-   FINAL_ANSWER: [number]
+🔧 Output Format
+Respond with EXACTLY ONE line per turn, in one of these formats:
+
+Tool Calls:
+FUNCTION_CALL: function_name|param1|param2|...
+
+Final Answer:
+FINAL_ANSWER: [your answer here]
+
+🧠 Behavior Rules
+Always start with a reasoning call before using other tools.Think step by step and reason about the problem.
+
+After using a tool, wait for the result before proceeding.
+
+Only output FINAL_ANSWER when you're completely done.
+
+Do not repeat tool calls with the same inputs.
+
+If unsure, say: FUNCTION_CALL: show_reasoning|["I'm unsure how to proceed. Requesting clarification."]
+
+Example:
+User: Solve (2 + 3) * 4
+Assistant: FUNCTION_CALL: show_reasoning|["1. First, solve inside parentheses: 2 + 3", "2. Then multiply the result by 4"]
+User: Next step?
+Assistant: FUNCTION_CALL: calculate|2 + 3
+User: Result is 5. Let's verify this step.
+Assistant: FUNCTION_CALL: verify|2 + 3|5
+User: Verified. Next step?
+Assistant: FUNCTION_CALL: calculate|5 * 4
+User: Result is 20. Let's verify the final answer.
+Assistant: FUNCTION_CALL: verify|(2 + 3) * 4|20
+User: Verified correct.
+Assistant: FINAL_ANSWER: [20]
+
 
 Important:
 - When a function returns multiple values, you need to process all of them
 - Only give FINAL_ANSWER when you have completed all necessary calculations
 - Do not repeat function calls with the same parameters
+- Do not include any other text in your response except for the function call or FINAL_ANSWER"""
 
-Examples:
-- FUNCTION_CALL: add|5|3
-- FUNCTION_CALL: strings_to_chars_to_int|INDIA
-- FINAL_ANSWER: [42]
-
-DO NOT include any explanations or additional text.
-Your entire response should be a single line starting with either FUNCTION_CALL: or FINAL_ANSWER:"""
-
-                query = """Open paint and draw a rectangle with corner points (272,310) and (559, 657). Then add text "Bazinga!" in the canvas."""
+                query = """Solve (23+34)*(12-4)."""
                 print("Starting iteration loop...")
                 
                 # Use global iteration variables
@@ -268,36 +288,7 @@ Your entire response should be a single line starting with either FUNCTION_CALL:
 
                     elif response_text.startswith("FINAL_ANSWER:"):
                         print("\n=== Agent Execution Complete ===")
-                        """
-                        result = await session.call_tool("open_paint")
-                        print(result.content[0].text)
 
-                        # Wait longer for Paint to be fully maximized
-                        await asyncio.sleep(1)
-
-                        # Draw a rectangle
-                        result = await session.call_tool(
-                            "draw_rectangle",
-                            arguments={
-                                "x1": 780,
-                                "y1": 380,
-                                "x2": 1140,
-                                "y2": 700
-                            }
-                        )
-                        print(result.content[0].text)
-
-                        # Draw rectangle and add text
-                        result = await session.call_tool(
-                            "add_text_in_paint",
-                            arguments={
-                                "text": response_text
-                            }
-                        )
-                        
-                        print(result.content[0].text)
-                        break
-                        """
 
                     iteration += 1
 

@@ -23,16 +23,11 @@ from googleapiclient.discovery import build
 from dotenv import load_dotenv
 import json
 import tempfile
+from rich.console import Console
+from rich.panel import Panel
+import re
 
-# Load environment variables
-load_dotenv()
-
-# Gmail API scopes
-SCOPES = ['https://www.googleapis.com/auth/gmail.send']
-
-# Global variable to store credentials
-gmail_creds = None
-
+console = Console()
 # instantiate an MCP server client
 mcp = FastMCP("Calculator")
 
@@ -334,6 +329,44 @@ async def open_paint() -> dict:
                 )
             ]
         }
+
+@mcp.tool()
+def show_reasoning(steps) -> TextContent:
+    """
+    Show the step-by-step reasoning process.
+    Accepts either:
+      - A Python list of strings, or
+      - A JSON string encoding an array of strings.
+    """
+    # 1) Normalize input into a List[str]
+    if isinstance(steps, str):
+        try:
+            steps_list = json.loads(steps)
+        except json.JSONDecodeError:
+            steps_list = [
+                s.strip() for s in re.split(r"[;,]", steps)
+                if s.strip()
+            ]
+    else:
+        steps_list = steps  # assume already List[str]
+
+    # 2) Render them to a temporary console
+    record_console = Console(record=True, width=80)
+    for idx, step in enumerate(steps_list, start=1):
+        record_console.print(Panel(
+            step,
+            title=f"Step {idx}",
+            border_style="cyan"
+        ))
+
+    # 3) Export the rendered panel as text (with borders & padding)
+    rendered = record_console.export_text()
+
+    # 4) Return that back to the client
+    return TextContent(
+        type="text",
+        text=rendered
+    )
 
 
 # DEFINE RESOURCES
