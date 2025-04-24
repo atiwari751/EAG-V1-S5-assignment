@@ -4,9 +4,14 @@ from mcp import ClientSession, StdioServerParameters, types
 from mcp.client.stdio import stdio_client
 import asyncio
 import google.generativeai as genai
+import json
+import re
+from rich.console import Console
+from rich.panel import Panel
 from concurrent.futures import TimeoutError
 from functools import partial
 
+console = Console()
 # Load environment variables from .env file
 load_dotenv()
 
@@ -16,14 +21,14 @@ genai.configure(api_key=api_key)
 # instantiate exactly one model
 model = genai.GenerativeModel("gemini-2.0-flash")
 
-max_iterations = 7
+# max_iterations = 7    # commented out—no longer used (loop until FINAL_ANSWER)
 last_response = None
 iteration = 0
 iteration_response = []
 
 async def generate_with_timeout(model, prompt, timeout=10):
     """Generate content with a timeout using the new google.generativeai API."""
-    print("Starting LLM generation…")
+    # print("Starting LLM generation…")
     try:
         loop = asyncio.get_event_loop()
         response = await asyncio.wait_for(
@@ -34,7 +39,7 @@ async def generate_with_timeout(model, prompt, timeout=10):
             ),
             timeout=timeout
         )
-        print("LLM generation completed")
+        # print("LLM generation completed")
         return response
 
     except TimeoutError:
@@ -141,20 +146,6 @@ Do not repeat tool calls with the same inputs.
 
 If unsure, say: FUNCTION_CALL: show_reasoning|["I'm unsure how to proceed. Requesting clarification."]
 
-Example:
-User: Solve (2 + 3) * 4
-Assistant: FUNCTION_CALL: show_reasoning|["1. First, solve inside parentheses: 2 + 3", "2. Then multiply the result by 4"]
-User: Next step?
-Assistant: FUNCTION_CALL: calculate|2 + 3
-User: Result is 5. Let's verify this step.
-Assistant: FUNCTION_CALL: verify|2 + 3|5
-User: Verified. Next step?
-Assistant: FUNCTION_CALL: calculate|5 * 4
-User: Result is 20. Let's verify the final answer.
-Assistant: FUNCTION_CALL: verify|(2 + 3) * 4|20
-User: Verified correct.
-Assistant: FINAL_ANSWER: [20]
-
 
 Important:
 - When a function returns multiple values, you need to process all of them
@@ -162,13 +153,14 @@ Important:
 - Do not repeat function calls with the same parameters
 - Do not include any other text in your response except for the function call or FINAL_ANSWER"""
 
-                query = """Solve (23+34)*(12-4)."""
+                query = """Open paint and draw a rectangle with corner points (272,310) and (559, 657). Then add text "Mothafucka!" in the canvas."""
                 print("Starting iteration loop...")
                 
                 # Use global iteration variables
                 global iteration, last_response
                 
-                while iteration < max_iterations:
+                # Adaptive iteration loop; exit on FINAL_ANSWER
+                while True:
                     print(f"\n--- Iteration {iteration + 1} ---")
                     if last_response is None:
                         current_query = query
@@ -177,34 +169,31 @@ Important:
                         current_query = current_query + "  What should I do next?"
 
                     # Get model's response with timeout
-                    print("Preparing to generate LLM response...")
+                    # print("Preparing to generate LLM response...")
                     prompt = f"{system_prompt}\n\nQuery: {current_query}"
                     try:
                         response = await generate_with_timeout(model, prompt)
                         response_text = response.text.strip()
                         print(f"LLM Response: {response_text}")
                         
-                        # Find the FUNCTION_CALL line in the response
+                        # Keep only the single relevant line
                         for line in response_text.split('\n'):
-                            line = line.strip()
-                            if line.startswith("FUNCTION_CALL:"):
+                            if line.startswith("FUNCTION_CALL:") or line.startswith("FINAL_ANSWER:"):
                                 response_text = line
                                 break
-                        
                     except Exception as e:
                         print(f"Failed to get LLM response: {e}")
                         break
-
 
                     if response_text.startswith("FUNCTION_CALL:"):
                         _, function_info = response_text.split(":", 1)
                         parts = [p.strip() for p in function_info.split("|")]
                         func_name, params = parts[0], parts[1:]
                         
-                        print(f"\nDEBUG: Raw function info: {function_info}")
-                        print(f"DEBUG: Split parts: {parts}")
-                        print(f"DEBUG: Function name: {func_name}")
-                        print(f"DEBUG: Raw parameters: {params}")
+                        # print(f"\nDEBUG: Raw function info: {function_info}")
+                        # print(f"DEBUG: Split parts: {parts}")
+                        # print(f"DEBUG: Function name: {func_name}")
+                        # print(f"DEBUG: Raw parameters: {params}")
                         
                         try:
                             # Find the matching tool to get its input schema
@@ -213,13 +202,13 @@ Important:
                                 print(f"DEBUG: Available tools: {[t.name for t in tools]}")
                                 raise ValueError(f"Unknown tool: {func_name}")
 
-                            print(f"DEBUG: Found tool: {tool.name}")
-                            print(f"DEBUG: Tool schema: {tool.inputSchema}")
+                            # print(f"DEBUG: Found tool: {tool.name}")
+                            # print(f"DEBUG: Tool schema: {tool.inputSchema}")
 
                             # Prepare arguments according to the tool's input schema
                             arguments = {}
                             schema_properties = tool.inputSchema.get('properties', {})
-                            print(f"DEBUG: Schema properties: {schema_properties}")
+                            # print(f"DEBUG: Schema properties: {schema_properties}")
 
                             for param_name, param_info in schema_properties.items():
                                 if not params:  # Check if we have enough parameters
@@ -228,7 +217,7 @@ Important:
                                 value = params.pop(0)  # Get and remove the first parameter
                                 param_type = param_info.get('type', 'string')
                                 
-                                print(f"DEBUG: Converting parameter {param_name} with value {value} to type {param_type}")
+                                # print(f"DEBUG: Converting parameter {param_name} with value {value} to type {param_type}")
                                 
                                 # Convert the value to the correct type based on the schema
                                 if param_type == 'integer':
@@ -243,15 +232,38 @@ Important:
                                 else:
                                     arguments[param_name] = str(value)
 
-                            print(f"DEBUG: Final arguments: {arguments}")
-                            print(f"DEBUG: Calling tool {func_name}")
+                            # print(f"DEBUG: Final arguments: {arguments}")
+                            # print(f"DEBUG: Calling tool {func_name}")
                             
                             result = await session.call_tool(func_name, arguments=arguments)
-                            print(f"DEBUG: Raw result: {result}")
+                            # print(f"DEBUG: Raw result: {result}")
                             
+                            # show panels immediately
+                            if func_name == "show_reasoning":
+                                # re-parse the raw 'steps' argument we sent
+                                raw = arguments.get("steps", "")
+                                try:
+                                    steps_list = json.loads(raw)
+                                except json.JSONDecodeError:
+                                    steps_list = [
+                                        s.strip()
+                                        for s in re.split(r"[;,]", raw)
+                                        if s.strip()
+                                    ]
+                                # render each step in a rich Panel
+                                for idx, step in enumerate(steps_list, start=1):
+                                    console.print(
+                                        Panel(
+                                            step,
+                                            title=f"Step {idx}",
+                                            border_style="cyan",
+                                            expand=False,
+                                        )
+                                    )
+
                             # Get the full result content
                             if hasattr(result, 'content'):
-                                print(f"DEBUG: Result has content attribute")
+                                # print(f"DEBUG: Result has content attribute")
                                 # Handle multiple content items
                                 if isinstance(result.content, list):
                                     iteration_result = [
@@ -261,10 +273,10 @@ Important:
                                 else:
                                     iteration_result = str(result.content)
                             else:
-                                print(f"DEBUG: Result has no content attribute")
+                                # print(f"DEBUG: Result has no content attribute")
                                 iteration_result = str(result)
                                 
-                            print(f"DEBUG: Final iteration result: {iteration_result}")
+                            # print(f"DEBUG: Final iteration result: {iteration_result}")
                             
                             # Format the response based on result type
                             if isinstance(iteration_result, list):
@@ -279,16 +291,22 @@ Important:
                             last_response = iteration_result
 
                         except Exception as e:
-                            print(f"DEBUG: Error details: {str(e)}")
-                            print(f"DEBUG: Error type: {type(e)}")
+                            # print(f"DEBUG: Error details: {str(e)}")
+                            # print(f"DEBUG: Error type: {type(e)}")
                             import traceback
                             traceback.print_exc()
                             iteration_response.append(f"Error in iteration {iteration + 1}: {str(e)}")
                             break
 
                     elif response_text.startswith("FINAL_ANSWER:"):
+                        # Agent is done
+                        final_answer = response_text.split("FINAL_ANSWER:", 1)[1].strip()
                         print("\n=== Agent Execution Complete ===")
-
+                        print(f"FINAL ANSWER: {final_answer}")
+                        break
+                    else:
+                        print("Unexpected model response—terminating loop.")
+                        break
 
                     iteration += 1
 
