@@ -64,7 +64,7 @@ async def main():
         print("Establishing connection to MCP server...")
         server_params = StdioServerParameters(
             command="python",
-            args=["example2.py"]
+            args=["paint_mcp_tools.py"]
         )
 
         async with stdio_client(server_params) as (read, write):
@@ -151,7 +151,7 @@ Important:
 - When a function returns multiple values, you need to process all of them
 - Only give FINAL_ANSWER when you have completed all necessary calculations
 - Do not repeat function calls with the same parameters
-- Do not include any other text in your response except for the function call or FINAL_ANSWER"""
+- VERY IMPORTANT: Do not include any other text in your response except for the FUNCTION_CALL or FINAL_ANSWER"""
 
                 query = """Open paint and draw a rectangle with corner points (272,310) and (559, 657). Then add text "Mothafucka!" in the canvas."""
                 print("Starting iteration loop...")
