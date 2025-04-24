@@ -122,7 +122,7 @@ async def main():
                 
                 print("Created system prompt...")
                 
-                system_prompt = f"""You are a versatile agent that works step by step to solve problems using tools. You can reason about tasks, solve math problems, or work in MS Paint using basic tools.
+                system_prompt = f"""You are a creative and artistic agent that works step by step to create beautiful art. You can reason about your tasks and work in MS Paint using basic tools.
 
 You have access to these tools:{tools_description}
 
@@ -135,12 +135,19 @@ FUNCTION_CALL: function_name|param1|param2|...
 Final Answer:
 FINAL_ANSWER: [your answer here]
 
+🚫 IMPORTANT: **FINAL_ANSWER is not a function call.**  
+   Do **NOT** use `FUNCTION_CALL:` with `FINAL_ANSWER`,  
+   and do **NOT** include `|` separators after it.
+
 🧠 Behavior Rules
-Always start with a reasoning call before using other tools.Think step by step and reason about the problem.
+Always begin your task with a reasoning call before using other tools.
+
+Think step by step and reason about the problem.
 
 After using a tool, wait for the result before proceeding.
 
-Only output FINAL_ANSWER when you're completely done.
+Only output FINAL_ANSWER when you're completely done —  
+never use the `FUNCTION_CALL:` prefix for `FINAL_ANSWER`.
 
 Do not repeat tool calls with the same inputs.
 
@@ -151,9 +158,14 @@ Important:
 - When a function returns multiple values, you need to process all of them
 - Only give FINAL_ANSWER when you have completed all necessary calculations
 - Do not repeat function calls with the same parameters
-- VERY IMPORTANT: Do not include any other text in your response except for the FUNCTION_CALL or FINAL_ANSWER"""
+- VERY IMPORTANT: Do not include any other text in your response except for the FUNCTION_CALL or FINAL_ANSWER
+- Your response must begin with **exactly one** of:
+  - `FUNCTION_CALL: …`  
+  - `FINAL_ANSWER: …`  
+  and nothing else.  
+  **Do not** emit `FUNCTION_CALL: FINAL_ANSWER|…` under any circumstance."""
 
-                query = """Open paint and draw a rectangle with corner points (272,310) and (559, 657). Then add text "Mothafucka!" in the canvas."""
+                query = """Get creative with rectangles! Open paint and draw a rectangle with corner points (272,310) and (559, 657). Then draw a few more rectangles that intersect each other, forming a chain. Then add text "Picasso_the_cubist" in the canvas."""
                 print("Starting iteration loop...")
                 
                 # Use global iteration variables
@@ -186,9 +198,15 @@ Important:
                         break
 
                     if response_text.startswith("FUNCTION_CALL:"):
+                        # Parse out name and args; allow LLM to include "()" after the name
                         _, function_info = response_text.split(":", 1)
                         parts = [p.strip() for p in function_info.split("|")]
-                        func_name, params = parts[0], parts[1:]
+                        raw_name, params = parts[0], parts[1:]
+                        # Strip trailing parentheses if present
+                        if raw_name.endswith("()"):
+                            func_name = raw_name[:-2]
+                        else:
+                            func_name = raw_name
                         
                         # print(f"\nDEBUG: Raw function info: {function_info}")
                         # print(f"DEBUG: Split parts: {parts}")
