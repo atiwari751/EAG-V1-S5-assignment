@@ -12,7 +12,6 @@ from win32api import GetSystemMetrics
 from pywinauto.keyboard import send_keys
 import os
 
-
 import json
 import tempfile
 from rich.console import Console
@@ -25,7 +24,6 @@ console = Console()
 mcp = FastMCP("MSPainter")
 
 # DEFINE TOOLS
-
 
 @mcp.tool()
 async def draw_rectangle(x1: int, y1: int, x2: int, y2: int) -> dict:
@@ -420,13 +418,11 @@ def get_greeting(name: str) -> str:
     print("CALLED: get_greeting(name: str) -> str:")
     return f"Hello, {name}!"
 
-
 # DEFINE AVAILABLE PROMPTS
 @mcp.prompt()
 def review_code(code: str) -> str:
     return f"Please review this code:\n\n{code}"
     print("CALLED: review_code(code: str) -> str:")
-
 
 @mcp.prompt()
 def debug_error(error: str) -> list[base.Message]:
