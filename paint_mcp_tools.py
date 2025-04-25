@@ -21,17 +21,10 @@ import re
 
 console = Console()
 # instantiate an MCP server client
-mcp = FastMCP("Calculator")
+mcp = FastMCP("MSPainter")
 
 # DEFINE TOOLS
 
-@mcp.tool()
-def create_thumbnail(image_path: str) -> Image:
-    """Create a thumbnail from an image"""
-    print("CALLED: create_thumbnail(image_path: str) -> Image:")
-    img = PILImage.open(image_path)
-    img.thumbnail((100, 100))
-    return Image(data=img.tobytes(), format="png")
 
 @mcp.tool()
 async def draw_rectangle(x1: int, y1: int, x2: int, y2: int) -> dict:
