@@ -126,34 +126,32 @@ async def main():
 
 You have access to these tools:{tools_description}
 
-🔧 Output Format
-Respond with EXACTLY ONE line per turn, in one of these formats:
+When you respond, you MUST produce exactly one line, and that line MUST be in one of these two and only two formats:
 
-Tool Calls:
-FUNCTION_CALL: function_name|param1|param2|...
+  1) Tool invocation:
+     FUNCTION_CALL:<tool_name>|<arg1>|<arg2>|...  
+     – where <tool_name> is one of the available tool names  
+     – arguments follow separated by a single pipe character (“|”)  
+     – e.g. FUNCTION_CALL:draw_rectangle|272|310|559|657
 
-Final Answer:
-FINAL_ANSWER: [your answer here]
+  2) Final answer:
+     FINAL_ANSWER:<your answer here>  
+     – Must begin with “FINAL_ANSWER:”  
+     – Do NOT prefix this with “FUNCTION_CALL:”
 
-🚫 IMPORTANT: **FINAL_ANSWER is not a function call.**  
-   Do **NOT** use `FUNCTION_CALL:` with `FINAL_ANSWER`,  
-   and do **NOT** include `|` separators after it.
+🛑 IT IS ILLEGAL to ever write:
+   FUNCTION_CALL:FINAL_ANSWER|…  
+or any variant that treats FINAL_ANSWER as a tool.
 
 🧠 Very Important Behavior Rules
-- Always begin your task a step by step planning of the task. Use the show_reasoning tool to share your plan.
-- Only output FINAL_ANSWER when you have completed all the steps.
-- Never use the `FUNCTION_CALL:` prefix for `FINAL_ANSWER`.
-- Do not use the show_reasoning tool in any two consecutive iterations under any circumstance, ever!!!!
-- If unsure, say: FUNCTION_CALL: show_reasoning|["I'm unsure how to proceed. Requesting clarification."]
-- Do not repeat function calls with the same parameters
-- VERY IMPORTANT: Do not include any other text in your response except for the FUNCTION_CALL or FINAL_ANSWER
-- Your response must begin with **exactly one** of:
-  - `FUNCTION_CALL: …`  
-  - `FINAL_ANSWER: …`  
-  and nothing else.  
-  **Do not** emit `FUNCTION_CALL: FINAL_ANSWER|…` under any circumstance.
+- On the very first iteration, do NOT emit planning in plain text; to communicate your plan use exactly:
+     FUNCTION_CALL:show_reasoning|<JSON-encoded-list-of-steps>
+- There should be no step called "Finalize the image" in the initial plan.
+- Never use the show_reasoning tool in any two consecutive iterations under any circumstance, ever!!!!!!!!!!
+- Only issue FINAL_ANSWER when you have completed all steps.
+
   
-  Example:
+✅ Example:
 
   --- Iteration 1 ---
 LLM Response: FUNCTION_CALL: show_reasoning|["Step 1: Open MS Paint.", "Step 2: Draw a rectangle with the specified corner points.", "Step 3: Add the specified text in the canvas.", "Step 4: Finalize the image."]
@@ -166,12 +164,9 @@ LLM Response: FUNCTION_CALL: show_reasoning|["Step 1: Open MS Paint.", "Step 2: 
 ╭─────────────────── Step 3 ────────────────────╮
 │ Step 3: Add the specified text in the canvas. │
 ╰───────────────────────────────────────────────╯
-╭────────── Step 4 ───────────╮
-│ Step 4: Finalize the image. │
-╰─────────────────────────────╯
 
 --- Iteration 2 ---
-LLM Response: FUNCTION_CALL: open_paint()
+LLM Response: FUNCTION_CALL: open_paint
 
 --- Iteration 3 ---
 LLM Response: FUNCTION_CALL: draw_rectangle|272|310|559|657
@@ -186,7 +181,7 @@ LLM Response: FINAL_ANSWER: Done!
 
   """
 
-                query = """Open paint and draw a rectangle with corner points (272,310) and (559, 657). Then add text "Picasso_the_cubist" in the canvas."""
+                query = """Get creative with shapes! Open paint and draw a rectangle with corner points (272,310) and (559, 657). Then draw some ovals and arrows near the rectangle. Finally, add text "baby_AGI" in the canvas."""
                 print("Starting iteration loop...")
                 
                 # Use global iteration variables
@@ -341,7 +336,6 @@ LLM Response: FINAL_ANSWER: Done!
                         # Agent is done
                         final_answer = response_text.split("FINAL_ANSWER:", 1)[1].strip()
                         print("\n=== Agent Execution Complete ===")
-                        print(f"FINAL ANSWER: {final_answer}")
                         break
                     else:
                         print("Unexpected model response—terminating loop.")

@@ -41,36 +41,23 @@ async def draw_rectangle(x1: int, y1: int, x2: int, y2: int) -> dict:
                 ]
             }
         
-        # Get the Paint window
         paint_window = paint_app.window(class_name='MSPaintApp')
-        
-        # Get primary monitor width to adjust coordinates
-        primary_width = GetSystemMetrics(0)
-        
-        # Ensure Paint window is active
         if not paint_window.has_focus():
-            paint_window.set_focus()
-            time.sleep(0.2)
+            paint_window.set_focus(); time.sleep(0.2)
         
-        # Click on the Rectangle tool using the correct coordinates for secondary screen
+        # Select the Rectangle tool
         paint_window.click_input(coords=(440, 63))
         time.sleep(0.2)
         
-        # Get the canvas area
         canvas = paint_window.child_window(class_name='MSPaintView')
-        
-        # Draw rectangle - coordinates should already be relative to the Paint window
-        # No need to add primary_width since we're clicking within the Paint window
         canvas.press_mouse_input(coords=(x1, y1))
         canvas.move_mouse_input(coords=(x2, y2))
         canvas.release_mouse_input(coords=(x2, y2))
         
-        # ─── Deselect the rectangle so we can draw another one ──────────
-        # a short pause to ensure Paint has registered the release
+        # Deselect
         time.sleep(0.1)
-        # click just outside the rectangle at its bottom‐right corner
-        # (offset by a few pixels so the shape is no longer selected)
         canvas.click_input(coords=(x2 + 5, y2 + 5))
+        time.sleep(0.2)    # ← added sleep after deselect
         
         return {
             "content": [
@@ -232,6 +219,121 @@ def show_reasoning(steps) -> TextContent:
         text=rendered
     )
 
+@mcp.tool()
+async def draw_oval(x1: int, y1: int, x2: int, y2: int) -> dict:
+    """Draw an oval in Paint from (x1,y1) to (x2,y2)"""
+    global paint_app
+    try:
+        if not paint_app:
+            return {"content":[TextContent(type="text",text="Paint is not open. Please call open_paint first.")]}
+        paint_window = paint_app.window(class_name="MSPaintApp")
+        if not paint_window.has_focus():
+            paint_window.set_focus(); time.sleep(0.2)
+        # Select Oval tool
+        paint_window.click_input(coords=(421, 63)); time.sleep(0.2)
+        canvas = paint_window.child_window(class_name="MSPaintView")
+        canvas.press_mouse_input(coords=(x1, y1))
+        canvas.move_mouse_input(coords=(x2, y2))
+        canvas.release_mouse_input(coords=(x2, y2))
+        # Deselect
+        time.sleep(0.1)
+        canvas.click_input(coords=(x2 + 5, y2 + 5))
+        time.sleep(0.2)  
+        return {"content":[TextContent(type="text",text=f"Oval drawn from ({x1},{y1}) to ({x2},{y2})")]}
+    except Exception as e:
+        return {"content":[TextContent(type="text",text=f"Error drawing oval: {e}")]}
+
+@mcp.tool()
+async def draw_right_arrow(x1: int, y1: int, x2: int, y2: int) -> dict:
+    """Draw a right arrow in Paint from (x1,y1) to (x2,y2)"""
+    global paint_app
+    try:
+        if not paint_app:
+            return {"content":[TextContent(type="text",text="Paint is not open. Please call open_paint first.")]}
+        paint_window = paint_app.window(class_name="MSPaintApp")
+        if not paint_window.has_focus():
+            paint_window.set_focus(); time.sleep(0.2)
+        # Select Right Arrow tool
+        paint_window.click_input(coords=(460, 82)); time.sleep(0.2)
+        canvas = paint_window.child_window(class_name="MSPaintView")
+        canvas.press_mouse_input(coords=(x1, y1))
+        canvas.move_mouse_input(coords=(x2, y2))
+        canvas.release_mouse_input(coords=(x2, y2))
+        time.sleep(0.1)
+        canvas.click_input(coords=(x2 + 5, y2 + 5))
+        time.sleep(0.2)  
+        return {"content":[TextContent(type="text",text=f"Right arrow drawn from ({x1},{y1}) to ({x2},{y2})")]}
+    except Exception as e:
+        return {"content":[TextContent(type="text",text=f"Error drawing right arrow: {e}")]}
+
+@mcp.tool()
+async def draw_left_arrow(x1: int, y1: int, x2: int, y2: int) -> dict:
+    """Draw a left arrow in Paint from (x1,y1) to (x2,y2)"""
+    global paint_app
+    try:
+        if not paint_app:
+            return {"content":[TextContent(type="text",text="Paint is not open. Please call open_paint first.")]}
+        paint_window = paint_app.window(class_name="MSPaintApp")
+        if not paint_window.has_focus():
+            paint_window.set_focus(); time.sleep(0.2)
+        # Select Left Arrow tool
+        paint_window.click_input(coords=(482, 82)); time.sleep(0.2)
+        canvas = paint_window.child_window(class_name="MSPaintView")
+        canvas.press_mouse_input(coords=(x1, y1))
+        canvas.move_mouse_input(coords=(x2, y2))
+        canvas.release_mouse_input(coords=(x2, y2))
+        time.sleep(0.1)
+        canvas.click_input(coords=(x2 + 5, y2 + 5))
+        time.sleep(0.2)  
+        return {"content":[TextContent(type="text",text=f"Left arrow drawn from ({x1},{y1}) to ({x2},{y2})")]}
+    except Exception as e:
+        return {"content":[TextContent(type="text",text=f"Error drawing left arrow: {e}")]}
+
+@mcp.tool()
+async def draw_up_arrow(x1: int, y1: int, x2: int, y2: int) -> dict:
+    """Draw an up arrow in Paint from (x1,y1) to (x2,y2)"""
+    global paint_app
+    try:
+        if not paint_app:
+            return {"content":[TextContent(type="text",text="Paint is not open. Please call open_paint first.")]}
+        paint_window = paint_app.window(class_name="MSPaintApp")
+        if not paint_window.has_focus():
+            paint_window.set_focus(); time.sleep(0.2)
+        # Select Up Arrow tool
+        paint_window.click_input(coords=(800, 82)); time.sleep(0.2)
+        canvas = paint_window.child_window(class_name="MSPaintView")
+        canvas.press_mouse_input(coords=(x1, y1))
+        canvas.move_mouse_input(coords=(x2, y2))
+        canvas.release_mouse_input(coords=(x2, y2))
+        time.sleep(0.1)
+        canvas.click_input(coords=(x2 + 5, y2 + 5))
+        time.sleep(0.2)  
+        return {"content":[TextContent(type="text",text=f"Up arrow drawn from ({x1},{y1}) to ({x2},{y2})")]}
+    except Exception as e:
+        return {"content":[TextContent(type="text",text=f"Error drawing up arrow: {e}")]}
+
+@mcp.tool()
+async def draw_down_arrow(x1: int, y1: int, x2: int, y2: int) -> dict:
+    """Draw a down arrow in Paint from (x1,y1) to (x2,y2)"""
+    global paint_app
+    try:
+        if not paint_app:
+            return {"content":[TextContent(type="text",text="Paint is not open. Please call open_paint first.")]}
+        paint_window = paint_app.window(class_name="MSPaintApp")
+        if not paint_window.has_focus():
+            paint_window.set_focus(); time.sleep(0.2)
+        # Select Down Arrow tool
+        paint_window.click_input(coords=(379, 105)); time.sleep(0.2)
+        canvas = paint_window.child_window(class_name="MSPaintView")
+        canvas.press_mouse_input(coords=(x1, y1))
+        canvas.move_mouse_input(coords=(x2, y2))
+        canvas.release_mouse_input(coords=(x2, y2))
+        time.sleep(0.1)
+        canvas.click_input(coords=(x2 + 5, y2 + 5))
+        time.sleep(0.2)  
+        return {"content":[TextContent(type="text",text=f"Down arrow drawn from ({x1},{y1}) to ({x2},{y2})")]}
+    except Exception as e:
+        return {"content":[TextContent(type="text",text=f"Error drawing down arrow: {e}")]}
 
 # DEFINE RESOURCES
 
