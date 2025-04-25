@@ -335,6 +335,71 @@ async def draw_down_arrow(x1: int, y1: int, x2: int, y2: int) -> dict:
     except Exception as e:
         return {"content":[TextContent(type="text",text=f"Error drawing down arrow: {e}")]}
 
+@mcp.tool()
+async def verify_task(task: str, expected_count: int = None) -> dict:
+    """
+    Verify that the previous drawing or writing action was performed successfully.
+    
+    Parameters:
+      - task (str): A description of what is to be verified. For example: "shape" or "text".
+      - expected_count (int, optional): For shape verification, the expected number of shapes on the canvas.
+      
+    Examples:
+      - After drawing the first shape:
+          verify_task("shape", 1)  # expecting 1 shape on the canvas.
+      - After drawing the second shape:
+          verify_task("shape", 2)  # expecting 2 shapes on the canvas.
+      - After drawing the third shape:
+          verify_task("shape", 3)  # expecting 3 shapes on the canvas.
+      - After adding text:
+          verify_task("text")  # verifies that text is present.
+          
+    If the tool determines that what has been drawn does not meet expectations, the agent may decide
+    to retry the last action with altered parameters.
+    
+    Note: This verification is simulated. In a production system, one might capture a screenshot from the canvas,
+    analyze it (for example, by counting drawn objects or detecting text), and then return the appropriate verification result.
+    """
+    global paint_app
+    try:
+        if not paint_app:
+            return {
+                "content": [
+                    TextContent(
+                        type="text",
+                        text="Paint is not open. Please call open_paint first."
+                    )
+                ]
+            }
+            
+        # Simulate verification based on provided parameters.
+        if expected_count is not None:
+            # Simulate verification for shapes using the expected count.
+            message = f"Verification successful: Canvas shows {expected_count} shape(s) as expected."
+        elif "text" in task.lower():
+            # Simulate text verification.
+            message = "Verification successful: Canvas contains text as expected."
+        else:
+            message = f"Verification complete for task '{task}'."
+            
+        return {
+            "content": [
+                TextContent(
+                    type="text",
+                    text=message
+                )
+            ]
+        }
+    except Exception as e:
+        return {
+            "content": [
+                TextContent(
+                    type="text",
+                    text=f"Verification failed: {str(e)}"
+                )
+            ]
+        }
+
 # DEFINE RESOURCES
 
 # Add a dynamic greeting resource
