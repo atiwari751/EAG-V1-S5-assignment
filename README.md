@@ -9,6 +9,8 @@ The project is composed of two main components:
 - **talk2mcp-2.py**: The client/agent file that constructs and sends dynamic prompts to the generative AI, parses formal JSON-based tool calls, and coordinates the execution of tasks in iterative steps.
 - **paint_mcp_tools.py**: Contains MCP tool definitions that automate interactions with MS Paint, providing functionalities such as drawing geometric shapes, adding text, and simulating verification of drawn content.
 
+See demo video [here](https://youtu.be/SZ_2yg9mmZU).
+
 ## System Prompt of the Agent
 
 The system prompt instructs the agent to behave as a creative and artistic assistant. It provides guidelines on how to invoke tools through formal JSON structure and conduct step-by-step reasoning. The prompt is as follows:
