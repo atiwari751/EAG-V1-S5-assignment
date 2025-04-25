@@ -19,7 +19,7 @@ load_dotenv()
 api_key = os.getenv("GEMINI_API_KEY")
 genai.configure(api_key=api_key)
 # instantiate exactly one model
-model = genai.GenerativeModel("gemini-2.0-flash")
+model = genai.GenerativeModel("gemini-2.0-flash-lite")
 
 # max_iterations = 7    # commented out—no longer used (loop until FINAL_ANSWER)
 last_response = None
@@ -146,9 +146,9 @@ or any variant that treats FINAL_ANSWER as a tool.
 🧠 Very Important Behavior Rules
 - On the very first iteration, do NOT emit planning in plain text; to communicate your plan use exactly:
      FUNCTION_CALL:show_reasoning|<JSON-encoded-list-of-steps>
-- After completing a step, verify whether your action was successful. If it was, proceed to the next step. If it was not, repeat the same step.
+- Whenever you complete a step, verify whether your action was successful using the verify_task tool. If it was, proceed to the next step. If it was not, repeat the same step.
 - There should be no step called "Finalize the image" in the initial plan.
-- Never use the show_reasoning tool in any two consecutive iterations under any circumstance, ever!!!!!!!!!!
+- Do NOT call the show_reasoning tool in any two consecutive iterations under any circumstance, ever!!!!!!!!!!
 - Only issue FINAL_ANSWER when you have completed all steps.
 
   
@@ -165,7 +165,9 @@ LLM Response: FUNCTION_CALL: show_reasoning|["Step 1: Open MS Paint.", "Step 2: 
 ╭─────────────────── Step 3 ────────────────────╮
 │ Step 3: Add the specified text in the canvas. │
 ╰───────────────────────────────────────────────╯
-
+╭────────────── Step 4 ───────────────╮
+│ Step 4: Verify the text and shapes. │
+╰─────────────────────────────────────╯
 --- Iteration 2 ---
 LLM Response: FUNCTION_CALL: open_paint
 
@@ -173,16 +175,22 @@ LLM Response: FUNCTION_CALL: open_paint
 LLM Response: FUNCTION_CALL: draw_rectangle|272|310|559|657
 
 --- Iteration 4 ---
-LLM Response: FUNCTION_CALL: add_text_in_paint|Picasso_the_cubist
+LLM Response: FUNCTION_CALL:verify_task|shape|1
 
 --- Iteration 5 ---
+LLM Response: FUNCTION_CALL: add_text_in_paint|Picasso_the_cubist
+
+--- Iteration 6 ---
+LLM Response: FUNCTION_CALL:verify_task|text|1
+
+--- Iteration 7 ---
 LLM Response: FINAL_ANSWER: Done!
 
 === Agent Execution Complete ===
 
   """
 
-                query = """Get creative with shapes! Open paint and draw a rectangle with corner points (272,310) and (559, 657). Then draw some ovals and arrows near the rectangle. Finally, add text "baby_AGI" in the canvas."""
+                query = """Get creative with shapes! Open paint and draw a rectangle with corner points (272,310) and (559, 657). Then make a small oval in the rectangle, and multiple arrows pointing to the oval, all in the rectangle. Finally, add text "baby_AGI" in the canvas."""
                 print("Starting iteration loop...")
                 
                 # Use global iteration variables

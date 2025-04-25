@@ -18,6 +18,7 @@ import tempfile
 from rich.console import Console
 from rich.panel import Panel
 import re
+from typing import Optional
 
 console = Console()
 # instantiate an MCP server client
@@ -336,7 +337,7 @@ async def draw_down_arrow(x1: int, y1: int, x2: int, y2: int) -> dict:
         return {"content":[TextContent(type="text",text=f"Error drawing down arrow: {e}")]}
 
 @mcp.tool()
-async def verify_task(task: str, expected_count: int = None) -> dict:
+async def verify_task(task: str, expected_count: Optional[int] = None) -> dict:
     """
     Verify that the previous drawing or writing action was performed successfully.
     
@@ -352,7 +353,7 @@ async def verify_task(task: str, expected_count: int = None) -> dict:
       - After drawing the third shape:
           verify_task("shape", 3)  # expecting 3 shapes on the canvas.
       - After adding text:
-          verify_task("text")  # verifies that text is present.
+          verify_task("text", 1)  # verifies that text is present.
           
     If the tool determines that what has been drawn does not meet expectations, the agent may decide
     to retry the last action with altered parameters.
@@ -399,6 +400,16 @@ async def verify_task(task: str, expected_count: int = None) -> dict:
                 )
             ]
         }
+
+# Override the input schema for verify_task to mark expected_count as optional.
+verify_task.inputSchema = {
+    "type": "object",
+    "properties": {
+        "task": {"type": "string"},
+        "expected_count": {"type": "integer"}
+    },
+    "required": ["task"]
+}
 
 # DEFINE RESOURCES
 
